@@ -1,3 +1,4 @@
+import os
 import torch
 import numpy as np
 import argparse
@@ -9,7 +10,7 @@ from sklearn.metrics.pairwise import euclidean_distances
 
 import matplotlib.pyplot as plt
 
-from IPython import embed
+# from IPython import embed
 
 import sys
 import pickle
@@ -95,7 +96,7 @@ def get_tfidf_weights(new_word_toks, vecs, word2tfidf):
     return tfidf_lst
 
 
-def save_bert_vectors(embed_model, dataloader, batching_fn, batching_kwargs, word2tfidf, dataname):
+def save_bert_vectors(datasetpath, embed_model, dataloader, batching_fn, batching_kwargs, word2tfidf, dataname):
     doc_matrix = []
     topic_matrix = []
     doc2i = dict()
@@ -137,15 +138,17 @@ def save_bert_vectors(embed_model, dataloader, batching_fn, batching_kwargs, wor
                 tidx += 1
                 topic_matrix.append(topic_vecs[bi])
     docm = np.array(doc_matrix)
-    np.save('../../resources/topicreps/bert_tfidfW_doc-{}.vecs.npy'.format(dataname), docm)
+    # np.save('../../resources/topicreps/bert_tfidfW_doc-{}.vecs.npy'.format(dataname), docm)
+    np.save(datasetpath + '/bert_tfidfW_doc-{}.vecs.npy'.format(dataname), docm)
     del docm
     topicm = np.array(topic_matrix)
-    np.save('../../resources/topicreps/bert_topic-{}.vecs.npy'.format(dataname), topicm)
+    # np.save('../../resources/topicreps/bert_topic-{}.vecs.npy'.format(dataname), topicm)
+    np.save(datasetpath + '/bert_topic-{}.vecs.npy'.format(dataname), topicm)
     del topicm
     print("[{}] saved to ../../resources/topicreps/bert_[tfidfW_doc/topic]-{}.vecs.npy".format(dataname, dataname))
 
-    pickle.dump(doc2i, open('../../resources/topicreps/bert_tfidfW_doc-{}.vocab.pkl'.format(dataname), 'wb'))
-    pickle.dump(topic2i, open('../../resources/topicreps/bert_topic-{}.vocab.pkl'.format(dataname), 'wb'))
+    pickle.dump(doc2i, open(datasetpath + '/bert_tfidfW_doc-{}.vocab.pkl'.format(dataname), 'wb'))
+    pickle.dump(topic2i, open(datasetpath + '/bert_topic-{}.vocab.pkl'.format(dataname), 'wb'))
     print("[{}] saved to ../../resources/topicreps/bert_[tfidfW_doc/topic]-{}.vocab.pkl".format(dataname, dataname))
 
 
@@ -279,6 +282,9 @@ if __name__ == '__main__':
                                    max_top_len=5, is_bert=True, add_special_tokens=True)
     dev_dataloader = data_utils.DataSampler(dev_data, batch_size=64, shuffle=False)
 
+    datasetpath = args['data_path']
+    os.makedirs(datasetpath, exist_ok=True)
+
     if args['test_data'] is not None:
         test_data = datasets.StanceData(args['test_data'],None, max_tok_len=200,
                                        max_top_len=5, is_bert=True, add_special_tokens=True)
@@ -295,11 +301,11 @@ if __name__ == '__main__':
         corpus = load_data(args['trn_data'])
         word2tfidf = get_features(corpus)
 
-        save_bert_vectors(input_layer, dataloader, batching_fn, batch_args, word2tfidf, 'train')
-        save_bert_vectors(input_layer, dev_dataloader, batching_fn, batch_args, word2tfidf, 'dev')
+        save_bert_vectors(datasetpath, input_layer, dataloader, batching_fn, batch_args, word2tfidf, 'train')
+        save_bert_vectors(datasetpath, input_layer, dev_dataloader, batching_fn, batch_args, word2tfidf, 'dev')
 
         if args['test_data'] is not None:
-            save_bert_vectors(input_layer, test_dataloader, batching_fn, batch_args, word2tfidf, 'test')
+            save_bert_vectors(datasetpath, input_layer, test_dataloader, batching_fn, batch_args, word2tfidf, 'test')
 
     elif args['mode'] == '2':
         print("Clustering")
