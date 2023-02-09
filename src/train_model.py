@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import torch, sys, argparse, time
 sys.path.append('./modeling')
@@ -77,6 +78,9 @@ if __name__ == '__main__':
                         required=False, type=bool, default=False)
     parser.add_argument('-p', '--num_warm', help='Number of warm-up epochs', required=False,
                         type=int, default=0)
+    parser.add_argument('--path', help='Path to the data files', required=True, default='./data/')
+    parser.add_argument('--checkpoint_path', help='Path to the checkpoint files', required=True)
+    parser.add_argument('--result_path', help='Path to the result files', required=True)
     parser.add_argument('-k', '--score_key', help='Score to use for optimization', required=False,
                         default='f_macro')
     parser.add_argument('-v', '--save_ckp', help='Whether to save checkpoints', required=False,
@@ -86,6 +90,12 @@ if __name__ == '__main__':
     torch.manual_seed(SEED)
     torch.cuda.manual_seed_all(SEED)
     torch.backends.cudnn.deterministic = True
+
+    # create output paths
+    checkpoint_path = args['checkpoint_path']
+    result_path = args['result_path']
+    os.makedirs(checkpoint_path, exist_ok=True)
+    os.makedirs(result_path, exist_ok=True)
 
     ####################
     # load config file #
@@ -102,17 +112,17 @@ if __name__ == '__main__':
     vec_dim  = int(config.get('vec_dim', 0))
 
     if 'vec_name' in config:
-        vecs = data_utils.load_vectors('../resources/{}.vectors.npy'.format(vec_name),
+        vecs = data_utils.load_vectors(args["path"] + '../resources/{}.vectors.npy'.format(vec_name),
                                    dim=vec_dim, seed=SEED)
 
     trn_data_kwargs = {}
     dev_data_kwargs = {}
 
     if 'topic_name' in config:
-        topic_vecs = np.load('{}/{}.{}.npy'.format(config['topic_path'], config['topic_name'], config.get('rep_v', 'centroids')))
+        topic_vecs = np.load('{}/{}.{}.npy'.format(args['path'], config['topic_name'], config.get('rep_v', 'centroids')))
 
-        trn_data_kwargs['topic_rep_dict'] = '{}/{}-train.labels.pkl'.format(config['topic_path'], config['topic_name'])
-        dev_data_kwargs['topic_rep_dict'] = '{}/{}-dev.labels.pkl'.format(config['topic_path'], config['topic_name'])
+        trn_data_kwargs['topic_rep_dict'] = '{}/{}-train.labels.pkl'.format(args['path'], config['topic_name'])
+        dev_data_kwargs['topic_rep_dict'] = '{}/{}-dev.labels.pkl'.format(args['path'], config['topic_name'])
 
     #############
     # LOAD DATA #
@@ -185,8 +195,8 @@ if __name__ == '__main__':
                   'setup_fn': setup_fn}
 
         model_handler = model_utils.TorchModelHandler(use_cuda=use_cuda, num_gpus=NUM_GPUS,
-                                                      checkpoint_path=config.get('ckp_path', 'data/checkpoints/'),
-                                                      result_path=config.get('res_path','data/gen-stance/'),
+                                                      checkpoint_path=checkpoint_path,
+                                                      result_path=result_path,
                                                       use_score=args['score_key'],save_ckp=(args['save_ckp'] == 1),
                                                       **kwargs)
 
@@ -288,8 +298,8 @@ if __name__ == '__main__':
                   'setup_fn': setup_fn}
 
         model_handler = model_utils.TorchModelHandler(use_cuda=use_cuda,
-                                                      checkpoint_path=config.get('ckp_path', 'data/checkpoints/'),
-                                                      result_path=config.get('res_path', 'data/gen-stance/'),
+                                                      checkpoint_path=checkpoint_path,
+                                                      result_path=result_path,
                                                       use_score=args['score_key'], save_ckp=(args['save_ckp'] == 1),
                                                       **kwargs)
 
