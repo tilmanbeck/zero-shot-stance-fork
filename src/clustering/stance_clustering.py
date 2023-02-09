@@ -1,3 +1,4 @@
+import os
 import torch
 import numpy as np
 import argparse
@@ -93,7 +94,7 @@ def get_tfidf_weights(new_word_toks, vecs, word2tfidf):
     return tfidf_lst
 
 
-def save_bert_vectors(embed_model, dataloader, batching_fn, batching_kwargs, word2tfidf, dataname):
+def save_bert_vectors(datasetpath, embed_model, dataloader, batching_fn, batching_kwargs, word2tfidf, dataname):
     doc_matrix = []
     topic_matrix = []
     doc2i = dict()
@@ -135,15 +136,17 @@ def save_bert_vectors(embed_model, dataloader, batching_fn, batching_kwargs, wor
                 tidx += 1
                 topic_matrix.append(topic_vecs[bi])
     docm = np.array(doc_matrix)
-    np.save('../../resources/topicreps/bert_tfidfW_doc-{}.vecs.npy'.format(dataname), docm)
+    # np.save('../../resources/topicreps/bert_tfidfW_doc-{}.vecs.npy'.format(dataname), docm)
+    np.save(datasetpath + '/bert_tfidfW_doc-{}.vecs.npy'.format(dataname), docm)
     del docm
     topicm = np.array(topic_matrix)
-    np.save('../../resources/topicreps/bert_topic-{}.vecs.npy'.format(dataname), topicm)
+    # np.save('../../resources/topicreps/bert_topic-{}.vecs.npy'.format(dataname), topicm)
+    np.save(datasetpath + '/bert_topic-{}.vecs.npy'.format(dataname), topicm)
     del topicm
     print("[{}] saved to ../../resources/topicreps/bert_[tfidfW_doc/topic]-{}.vecs.npy".format(dataname, dataname))
 
-    pickle.dump(doc2i, open('../../resources/topicreps/bert_tfidfW_doc-{}.vocab.pkl'.format(dataname), 'wb'))
-    pickle.dump(topic2i, open('../../resources/topicreps/bert_topic-{}.vocab.pkl'.format(dataname), 'wb'))
+    pickle.dump(doc2i, open(datasetpath + '/bert_tfidfW_doc-{}.vocab.pkl'.format(dataname), 'wb'))
+    pickle.dump(topic2i, open(datasetpath + '/bert_topic-{}.vocab.pkl'.format(dataname), 'wb'))
     print("[{}] saved to ../../resources/topicreps/bert_[tfidfW_doc/topic]-{}.vocab.pkl".format(dataname, dataname))
 
 
@@ -184,7 +187,7 @@ def load_vector_data(p, docname, topicname, dataname, dataloader, mode='concat')
     return np.array(dataX), dataY
 
 
-def cluster(dataname, trn_X, trn_Y, dev_X, dev_Y, k, trial_num, link_type='ward', m='euclidean'):
+def cluster(p, dataname, trn_X, trn_Y, dev_X, dev_Y, k, trial_num, link_type='ward', m='euclidean'):
     print("[{}] clustering with: linkage={}, m={}, n_clusters={}...".format(trial_num, link_type, m, k))
     clustering = AgglomerativeClustering(n_clusters=k, linkage=link_type, affinity=m)
     # clustering = KMeans(n_clusters=k)
@@ -196,7 +199,7 @@ def cluster(dataname, trn_X, trn_Y, dev_X, dev_Y, k, trial_num, link_type='ward'
     trn_id2i = dict()
     for rid, eid in trn_Y.items():
         trn_id2i[rid] = labels[eid]
-    trn_oname = '../../resources/topicreps/{}_{}_{}_{}-train.labels.pkl'.format(dataname, link_type, m, k)
+    trn_oname = p + '/{}_{}_{}_{}-train.labels.pkl'.format(dataname, link_type, m, k)
     pickle.dump(trn_id2i, open(trn_oname, 'wb'))
     print("[{}] saved to {}".format(trial_num, trn_oname))
 
@@ -204,7 +207,7 @@ def cluster(dataname, trn_X, trn_Y, dev_X, dev_Y, k, trial_num, link_type='ward'
     clf  = NearestCentroid()
     clf.fit(trn_X, labels)
     print("[{}] finished fitting classifier.".format(trial_num))
-    cen_oname = '../../resources/topicreps/{}_{}_{}_{}.centroids.npy'.format(dataname, link_type, m, k)
+    cen_oname = p + '/{}_{}_{}_{}.centroids.npy'.format(dataname, link_type, m, k)
     np.save(cen_oname, clf.centroids_)
     print("[{}] saved to {}".format(trial_num, cen_oname))
 
@@ -215,7 +218,7 @@ def cluster(dataname, trn_X, trn_Y, dev_X, dev_Y, k, trial_num, link_type='ward'
     dev_id2i = dict()
     for rid, eid in dev_Y.items():
         dev_id2i[rid] = dev_labels[eid]
-    dev_oname = '../../resources/topicreps/{}_{}_{}_{}-dev.labels.pkl'.format(dataname, link_type, m, k)
+    dev_oname = p + '/{}_{}_{}_{}-dev.labels.pkl'.format(dataname, link_type, m, k)
     pickle.dump(dev_id2i, open(dev_oname, 'wb'))
     print("[{}] saved to {}".format(trial_num, dev_oname))
     print()
@@ -230,8 +233,8 @@ def calculate_sse(centroids, dev_X, dev_labels):
     return sse
 
 
-def get_cluster_labels(dataname, k, X, Y, s):
-    trn_centroids = np.load('../../resources/topicreps/{}_ward_euclidean_{}.centroids.npy'.format(dataname, k))
+def get_cluster_labels(p, dataname, k, X, Y, s):
+    trn_centroids = np.load(p + '/{}_ward_euclidean_{}.centroids.npy'.format(dataname, k))
     classes = np.array([i for i in range(len(trn_centroids))])
 
     clf = NearestCentroid()
@@ -242,7 +245,7 @@ def get_cluster_labels(dataname, k, X, Y, s):
     id2i = dict()
     for rid, eid in Y.items():
         id2i[rid] = labels[eid]
-    oname = '../../resources/topicreps/{}_ward_euclidean_{}-{}.labels.pkl'.format(dataname, k, s)
+    oname = p + '/{}_ward_euclidean_{}-{}.labels.pkl'.format(dataname, k, s)
     pickle.dump(id2i, open(oname, 'wb'))
     print("saved to {}".format(oname))
 
@@ -277,6 +280,9 @@ if __name__ == '__main__':
                                    max_top_len=5, is_bert=True, add_special_tokens=True)
     dev_dataloader = data_utils.DataSampler(dev_data, batch_size=64, shuffle=False)
 
+    datasetpath = args['data_path']
+    os.makedirs(datasetpath, exist_ok=True)
+
     if args['test_data'] is not None:
         test_data = datasets.StanceData(args['test_data'],None, max_tok_len=200,
                                        max_top_len=5, is_bert=True, add_special_tokens=True)
@@ -293,11 +299,11 @@ if __name__ == '__main__':
         corpus = load_data(args['trn_data'])
         word2tfidf = get_features(corpus)
 
-        save_bert_vectors(input_layer, dataloader, batching_fn, batch_args, word2tfidf, 'train')
-        save_bert_vectors(input_layer, dev_dataloader, batching_fn, batch_args, word2tfidf, 'dev')
+        save_bert_vectors(datasetpath, input_layer, dataloader, batching_fn, batch_args, word2tfidf, 'train')
+        save_bert_vectors(datasetpath, input_layer, dev_dataloader, batching_fn, batch_args, word2tfidf, 'dev')
 
         if args['test_data'] is not None:
-            save_bert_vectors(input_layer, test_dataloader, batching_fn, batch_args, word2tfidf, 'test')
+            save_bert_vectors(datasetpath, input_layer, test_dataloader, batching_fn, batch_args, word2tfidf, 'test')
 
     elif args['mode'] == '2':
         print("Clustering")
@@ -316,7 +322,7 @@ if __name__ == '__main__':
                 while k in tried_v:
                     k = np.random.randint(int(min_v), int(max_v) + 1)
 
-                sse = cluster(args['file_name'], trn_X, trn_Y, dev_X, dev_Y, k, trial_num)
+                sse = cluster(args['data_path'], args['file_name'], trn_X, trn_Y, dev_X, dev_Y, k, trial_num)
 
                 sse_lst.append(sse)
                 k_lst.append(k)
@@ -326,23 +332,23 @@ if __name__ == '__main__':
             sorted_k = [k_lst[i] for i in sort_k_indices]
             sorted_sse = [sse_lst[i] for i in sort_k_indices]
             plt.plot(sorted_k, sorted_sse, 'go--')
-            plt.savefig('../../resources/topicreps/SSE_clusters_{}.png'.format(args['file_name']))
+            plt.savefig(args['data_path'] + '/SSE_clusters_{}.png'.format(args['file_name']))
         else:
-            cluster(args['file_name'], trn_X, trn_Y, dev_X, dev_Y, int(args['k']), 0)
+            cluster(args['data_path'], args['file_name'], trn_X, trn_Y, dev_X, dev_Y, int(args['k']), 0)
 
     elif args['mode'] == '3':
         print("Getting cluster assignments")
         X, Y = load_vector_data(args['data_path'], docname=args['doc_name'], topicname=args['topic_name'],
                                 dataname='train', dataloader=dataloader, mode='concat')
-        get_cluster_labels('bert_tfidfW', int(args['k']), X, Y, 'train')
+        get_cluster_labels(args['data_path'], 'bert_tfidfW', int(args['k']), X, Y, 'train')
 
         X, Y = load_vector_data(args['data_path'], docname=args['doc_name'], topicname=args['topic_name'],
                                 dataname='dev', dataloader=dev_dataloader, mode='concat')
-        get_cluster_labels('bert_tfidfW', int(args['k']), X, Y, 'dev')
+        get_cluster_labels(args['data_path'], 'bert_tfidfW', int(args['k']), X, Y, 'dev')
 
         X, Y = load_vector_data(args['data_path'], docname=args['doc_name'], topicname=args['topic_name'],
                                 dataname='test', dataloader=test_dataloader, mode='concat')
-        get_cluster_labels('bert_tfidfW', int(args['k']), X, Y, 'test')
+        get_cluster_labels(args['data_path'], 'bert_tfidfW', int(args['k']), X, Y, 'test')
 
 
 
