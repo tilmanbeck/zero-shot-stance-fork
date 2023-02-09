@@ -284,7 +284,7 @@ if __name__ == '__main__':
     os.makedirs(datasetpath, exist_ok=True)
 
     if args['test_data'] is not None:
-        test_data = datasets.StanceData(args['test_data'],None, max_tok_len=200,
+        test_data = datasets.StanceData(args['test_data'], None, max_tok_len=200,
                                        max_top_len=5, is_bert=True, add_special_tokens=True)
         test_dataloader = data_utils.DataSampler(test_data, batch_size=64, shuffle=False)
 
