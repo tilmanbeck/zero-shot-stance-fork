@@ -151,10 +151,10 @@ def save_bert_vectors(datasetpath, embed_model, dataloader, batching_fn, batchin
 
 
 def load_vector_data(p, docname, topicname, dataname, dataloader, mode='concat'):
-    docm = np.load('{}{}-{}.vecs.npy'.format(p, docname, dataname))
-    topicm = np.load('{}{}-{}.vecs.npy'.format(p, topicname, dataname))
-    doc2i = pickle.load(open('{}{}-{}.vocab.pkl'.format(p, docname, dataname), 'rb'))
-    topic2i = pickle.load(open('{}{}-{}.vocab.pkl'.format(p, topicname, dataname), 'rb'))
+    docm = np.load('{}/{}-{}.vecs.npy'.format(p, docname, dataname))
+    topicm = np.load('{}/{}-{}.vecs.npy'.format(p, topicname, dataname))
+    doc2i = pickle.load(open('{}/{}-{}.vocab.pkl'.format(p, docname, dataname), 'rb'))
+    topic2i = pickle.load(open('{}/{}-{}.vocab.pkl'.format(p, topicname, dataname), 'rb'))
 
     doc2topics = dict()
     unique_topics = set()
@@ -284,7 +284,7 @@ if __name__ == '__main__':
     os.makedirs(datasetpath, exist_ok=True)
 
     if args['test_data'] is not None:
-        test_data = datasets.StanceData(args['test_data'],None, max_tok_len=200,
+        test_data = datasets.StanceData(args['test_data'], None, max_tok_len=200,
                                        max_top_len=5, is_bert=True, add_special_tokens=True)
         test_dataloader = data_utils.DataSampler(test_data, batch_size=64, shuffle=False)
 

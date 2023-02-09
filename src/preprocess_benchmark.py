@@ -22,7 +22,22 @@ def preprocess_text(text):
         tokens = [token for token in tokens if token not in nltk.corpus.stopwords.words('english')]
         # remove punctuation
         tokens = [token for token in tokens if token.isalnum() or contains(token)]
+
         sents_tokenized.append(tokens)
+    if sents_tokenized == [[]]: # in the rare case if all tokens are removed, we ignore stopword removal
+        sents_tokenized = []
+        for sent in nltk.sent_tokenize(text):
+            # tokenize text
+            tokens = nltk.tokenize.word_tokenize(sent, language='english')
+            # convert tokens to lowercase
+            tokens = [token.lower() for token in tokens]
+            # remove punctuation
+            removed_punctuation = [token for token in tokens if token.isalnum() or contains(token)]
+            if removed_punctuation != []:
+                sents_tokenized.append(removed_punctuation)
+            else:
+                sents_tokenized.append(tokens)
+    assert sents_tokenized != [[]]
     return sents_tokenized
 
 
