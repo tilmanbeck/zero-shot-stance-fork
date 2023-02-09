@@ -189,7 +189,7 @@ def load_vector_data(p, docname, topicname, dataname, dataloader, mode='concat')
     return np.array(dataX), dataY
 
 
-def cluster(dataname, trn_X, trn_Y, dev_X, dev_Y, k, trial_num, link_type='ward', m='euclidean'):
+def cluster(p, dataname, trn_X, trn_Y, dev_X, dev_Y, k, trial_num, link_type='ward', m='euclidean'):
     print("[{}] clustering with: linkage={}, m={}, n_clusters={}...".format(trial_num, link_type, m, k))
     clustering = AgglomerativeClustering(n_clusters=k, linkage=link_type, affinity=m)
     # clustering = KMeans(n_clusters=k)
@@ -201,7 +201,7 @@ def cluster(dataname, trn_X, trn_Y, dev_X, dev_Y, k, trial_num, link_type='ward'
     trn_id2i = dict()
     for rid, eid in trn_Y.items():
         trn_id2i[rid] = labels[eid]
-    trn_oname = '../../resources/topicreps/{}_{}_{}_{}-train.labels.pkl'.format(dataname, link_type, m, k)
+    trn_oname = p + '/{}_{}_{}_{}-train.labels.pkl'.format(dataname, link_type, m, k)
     pickle.dump(trn_id2i, open(trn_oname, 'wb'))
     print("[{}] saved to {}".format(trial_num, trn_oname))
 
@@ -209,7 +209,7 @@ def cluster(dataname, trn_X, trn_Y, dev_X, dev_Y, k, trial_num, link_type='ward'
     clf  = NearestCentroid()
     clf.fit(trn_X, labels)
     print("[{}] finished fitting classifier.".format(trial_num))
-    cen_oname = '../../resources/topicreps/{}_{}_{}_{}.centroids.npy'.format(dataname, link_type, m, k)
+    cen_oname = p + '/{}_{}_{}_{}.centroids.npy'.format(dataname, link_type, m, k)
     np.save(cen_oname, clf.centroids_)
     print("[{}] saved to {}".format(trial_num, cen_oname))
 
@@ -220,7 +220,7 @@ def cluster(dataname, trn_X, trn_Y, dev_X, dev_Y, k, trial_num, link_type='ward'
     dev_id2i = dict()
     for rid, eid in dev_Y.items():
         dev_id2i[rid] = dev_labels[eid]
-    dev_oname = '../../resources/topicreps/{}_{}_{}_{}-dev.labels.pkl'.format(dataname, link_type, m, k)
+    dev_oname = p + '/{}_{}_{}_{}-dev.labels.pkl'.format(dataname, link_type, m, k)
     pickle.dump(dev_id2i, open(dev_oname, 'wb'))
     print("[{}] saved to {}".format(trial_num, dev_oname))
     print()
@@ -235,8 +235,8 @@ def calculate_sse(centroids, dev_X, dev_labels):
     return sse
 
 
-def get_cluster_labels(dataname, k, X, Y, s):
-    trn_centroids = np.load('../../resources/topicreps/{}_ward_euclidean_{}.centroids.npy'.format(dataname, k))
+def get_cluster_labels(p, dataname, k, X, Y, s):
+    trn_centroids = np.load(p + '/{}_ward_euclidean_{}.centroids.npy'.format(dataname, k))
     classes = np.array([i for i in range(len(trn_centroids))])
 
     clf = NearestCentroid()
@@ -247,7 +247,7 @@ def get_cluster_labels(dataname, k, X, Y, s):
     id2i = dict()
     for rid, eid in Y.items():
         id2i[rid] = labels[eid]
-    oname = '../../resources/topicreps/{}_ward_euclidean_{}-{}.labels.pkl'.format(dataname, k, s)
+    oname = p + '/{}_ward_euclidean_{}-{}.labels.pkl'.format(dataname, k, s)
     pickle.dump(id2i, open(oname, 'wb'))
     print("saved to {}".format(oname))
 
@@ -324,7 +324,7 @@ if __name__ == '__main__':
                 while k in tried_v:
                     k = np.random.randint(int(min_v), int(max_v) + 1)
 
-                sse = cluster(args['file_name'], trn_X, trn_Y, dev_X, dev_Y, k, trial_num)
+                sse = cluster(args['data_path'], args['file_name'], trn_X, trn_Y, dev_X, dev_Y, k, trial_num)
 
                 sse_lst.append(sse)
                 k_lst.append(k)
@@ -334,23 +334,23 @@ if __name__ == '__main__':
             sorted_k = [k_lst[i] for i in sort_k_indices]
             sorted_sse = [sse_lst[i] for i in sort_k_indices]
             plt.plot(sorted_k, sorted_sse, 'go--')
-            plt.savefig('../../resources/topicreps/SSE_clusters_{}.png'.format(args['file_name']))
+            plt.savefig(args['data_path'] + '/SSE_clusters_{}.png'.format(args['file_name']))
         else:
-            cluster(args['file_name'], trn_X, trn_Y, dev_X, dev_Y, int(args['k']), 0)
+            cluster(args['data_path'], args['file_name'], trn_X, trn_Y, dev_X, dev_Y, int(args['k']), 0)
 
     elif args['mode'] == '3':
         print("Getting cluster assignments")
         X, Y = load_vector_data(args['data_path'], docname=args['doc_name'], topicname=args['topic_name'],
                                 dataname='train', dataloader=dataloader, mode='concat')
-        get_cluster_labels('bert_tfidfW', int(args['k']), X, Y, 'train')
+        get_cluster_labels(args['data_path'], 'bert_tfidfW', int(args['k']), X, Y, 'train')
 
         X, Y = load_vector_data(args['data_path'], docname=args['doc_name'], topicname=args['topic_name'],
                                 dataname='dev', dataloader=dev_dataloader, mode='concat')
-        get_cluster_labels('bert_tfidfW', int(args['k']), X, Y, 'dev')
+        get_cluster_labels(args['data_path'], 'bert_tfidfW', int(args['k']), X, Y, 'dev')
 
         X, Y = load_vector_data(args['data_path'], docname=args['doc_name'], topicname=args['topic_name'],
                                 dataname='test', dataloader=test_dataloader, mode='concat')
-        get_cluster_labels('bert_tfidfW', int(args['k']), X, Y, 'test')
+        get_cluster_labels(args['data_path'], 'bert_tfidfW', int(args['k']), X, Y, 'test')
 
 
 

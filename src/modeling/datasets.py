@@ -1,3 +1,4 @@
+import ast
 import pickle, json
 from torch.utils.data import Dataset
 import pandas as pd
@@ -15,6 +16,9 @@ class StanceData(Dataset):
                  **kwargs):
         self.data_name = data_name
         self.data_file = pd.read_csv(data_name)
+        # correctly read lists
+        self.data_file['topic'] = self.data_file['topic'].apply(lambda x: ast.literal_eval(x))
+        self.data_file['text'] = self.data_file['text'].apply(lambda x: ast.literal_eval(x))
         if vocab_name != None:
             self.word2i = pickle.load(open(vocab_name, 'rb'))
         self.name = name
@@ -56,9 +60,9 @@ class StanceData(Dataset):
             print("processing BERT")
             for i in self.data_file.index:
                 row = self.data_file.iloc[i]
-                text = json.loads(row['text'])
+                text = row['text'] # json.loads(row['text'])
                 num_sens = len(text)
-                ori_topic = json.loads(row['topic'])
+                ori_topic = row['topic'] #json.loads(row['topic'])
                 ori_text = [' '.join(ti) for ti in text] if self.keep_sen else row['text_s']
                 text = self.tokenizer.encode(ori_text, add_special_tokens=self.add_special_tokens,
                                              max_length=int(self.max_tok_len), pad_to_max_length=True)
