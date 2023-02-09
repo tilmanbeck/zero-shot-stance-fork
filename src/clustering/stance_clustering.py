@@ -143,11 +143,11 @@ def save_bert_vectors(datasetpath, embed_model, dataloader, batching_fn, batchin
     # np.save('../../resources/topicreps/bert_topic-{}.vecs.npy'.format(dataname), topicm)
     np.save(datasetpath + '/bert_topic-{}.vecs.npy'.format(dataname), topicm)
     del topicm
-    print("[{}] saved to ../../resources/topicreps/bert_[tfidfW_doc/topic]-{}.vecs.npy".format(dataname, dataname))
+    print("[{}] saved to {}/bert_[tfidfW_doc/topic]-{}.vecs.npy".format(dataname, datasetpath, dataname))
 
     pickle.dump(doc2i, open(datasetpath + '/bert_tfidfW_doc-{}.vocab.pkl'.format(dataname), 'wb'))
     pickle.dump(topic2i, open(datasetpath + '/bert_topic-{}.vocab.pkl'.format(dataname), 'wb'))
-    print("[{}] saved to ../../resources/topicreps/bert_[tfidfW_doc/topic]-{}.vocab.pkl".format(dataname, dataname))
+    print("[{}] saved to datasetpath/resources/topicreps/bert_[tfidfW_doc/topic]-{}.vocab.pkl".format(dataname, datasetpath, dataname))
 
 
 def load_vector_data(p, docname, topicname, dataname, dataloader, mode='concat'):
