@@ -104,7 +104,7 @@ class FFNN(torch.nn.Module):
     def __init__(self, **kwargs):
         super(FFNN, self).__init__()
         self.use_cuda = kwargs['use_cuda']
-        self.num_labels = kwargs.get('num_labels', 3)
+        self.num_labels = kwargs['num_labels']
         self.use_topic = kwargs['add_topic']
 
         if 'input_dim' in kwargs:
@@ -118,7 +118,7 @@ class FFNN(torch.nn.Module):
         self.model = nn.Sequential(nn.Dropout(p=kwargs['in_dropout_prob']),
                                    nn.Linear(in_dim, kwargs['hidden_size']),
                                    kwargs.get('nonlinear_fn',nn.Tanh()),
-                                   nn.Linear(kwargs['hidden_size'], 3,
+                                   nn.Linear(kwargs['hidden_size'], self.num_labels,
                                              bias=kwargs.get('bias', True)))
 
 
@@ -138,7 +138,7 @@ class TGANet(torch.nn.Module):
         self.use_cuda = kwargs['use_cuda']
         self.hidden_dim = kwargs['hidden_size']
         self.input_dim = kwargs['text_dim']
-        self.num_labels = 3
+        self.num_labels = kwargs['num_labels']
 
         self.attention_mode = kwargs.get('att_mode', 'text_only')
 
@@ -153,7 +153,8 @@ class TGANet(torch.nn.Module):
         self.ffnn = FFNN(use_cuda=kwargs['use_cuda'], add_topic=True,
                          input_dim=self.input_dim,
                          in_dropout_prob=kwargs['in_dropout_prob'],
-                         hidden_size=self.hidden_dim)
+                         hidden_size=self.hidden_dim,
+                         num_labels=self.num_labels)
 
     def forward(self, text, topic, topic_rep, text_l):
         avg_text = text.sum(1) / text_l.unsqueeze(1)

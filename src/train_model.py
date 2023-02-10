@@ -167,6 +167,8 @@ if __name__ == '__main__':
     ### set the optimizer
     lr = float(config.get('lr', '0.001'))
 
+    num_labels = data.get_num_labels()
+
     # RUN
     print("Using cuda?: {}".format(use_cuda))
 
@@ -282,6 +284,7 @@ if __name__ == '__main__':
         model = bm.TGANet(in_dropout_prob=float(config['in_dropout']),
                                  hidden_size=int(config['hidden_size']),
                                  text_dim=int(config['text_dim']),
+                                 num_labels=num_labels,
                                  add_topic=(config.get('add_resid', '0') == '1'),
                                  att_mode=config.get('att_mode', 'text_only'),
                                  topic_dim=int(config['topic_dim']),

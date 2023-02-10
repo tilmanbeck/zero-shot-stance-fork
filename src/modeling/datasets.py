@@ -22,6 +22,7 @@ class StanceData(Dataset):
         if vocab_name != None:
             self.word2i = pickle.load(open(vocab_name, 'rb'))
         self.name = name
+        self.num_labels = self.data_file['label'].nunique()
         self.max_sen_len = max_sen_len
         self.max_tok_len = max_tok_len
         self.max_top_len = max_top_len
@@ -146,6 +147,9 @@ class StanceData(Dataset):
 
     def __len__(self):
         return len(self.data_file)
+
+    def get_num_labels(self):
+        return self.num_labels
 
     def __getitem__(self, idx, corpus=None):
         row = self.data_file.iloc[idx]
