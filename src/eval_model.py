@@ -77,7 +77,8 @@ if __name__ == '__main__':
     parser.add_argument('-m', '--mode', help='What to do', required=True)
     parser.add_argument('-n', '--name', help='something to add to the saved model name',
                         required=False, default='')
-    parser.add_argument('-o', '--out', help='Ouput file name', default='')
+    parser.add_argument('--outname', help='Ouput file name', default='', required=True)
+    parser.add_argument('--outpath', help='output path', default='', required=True)
     parser.add_argument('-v', '--score_key', help='What optimized for', required=False, default='f_macro')
     args = vars(parser.parse_args())
 
@@ -85,7 +86,7 @@ if __name__ == '__main__':
     torch.cuda.manual_seed_all(SEED)
     torch.backends.cudnn.deterministic = True
 
-    if os.path.exists(args['out']):
+    if not os.path.exists(args['out']):
         os.makedirs(args['out'])
 
     ####################
@@ -331,6 +332,6 @@ if __name__ == '__main__':
     if args['mode'] == 'eval':
         eval(model_handler, dev_dataloader, class_wise=True, is_test=('test' in args['dev_data']))
     elif args['mode'] == 'predict':
-        save_predictions(model_handler, dev_dataloader, out_name=args['out'], is_test=('test' in args['dev_data']))
+        save_predictions(model_handler, dev_dataloader, out_name=args['outname'], is_test=('test' in args['dev_data']))
     else:
         print("doing nothing")
