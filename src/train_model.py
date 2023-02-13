@@ -8,7 +8,6 @@ import input_models as im
 import torch.optim as optim
 import torch.nn as nn
 
-SEED  = 0
 NUM_GPUS = None
 use_cuda = torch.cuda.is_available()
 
@@ -81,11 +80,14 @@ if __name__ == '__main__':
     parser.add_argument('--path', help='Path to the data files', required=True, default='./data/')
     parser.add_argument('--checkpoint_path', help='Path to the checkpoint files', required=True)
     parser.add_argument('--result_path', help='Path to the result files', required=True)
+    parser.add_argument('--seed', required=True, type=int, default=0)
     parser.add_argument('-k', '--score_key', help='Score to use for optimization', required=False,
                         default='f_macro')
     parser.add_argument('-v', '--save_ckp', help='Whether to save checkpoints', required=False,
                         default=0, type=int)
     args = vars(parser.parse_args())
+
+    SEED = args['seed']
 
     torch.manual_seed(SEED)
     torch.cuda.manual_seed_all(SEED)
@@ -119,10 +121,10 @@ if __name__ == '__main__':
     dev_data_kwargs = {}
 
     if 'topic_name' in config:
-        topic_vecs = np.load('{}/{}.{}.npy'.format(args['path'], config['topic_name'], config.get('rep_v', 'centroids')))
+        topic_vecs = np.load('{}/{}-{}.{}.npy'.format(args['path'], SEED, config['topic_name'], config.get('rep_v', 'centroids')))
 
-        trn_data_kwargs['topic_rep_dict'] = '{}/{}-train.labels.pkl'.format(args['path'], config['topic_name'])
-        dev_data_kwargs['topic_rep_dict'] = '{}/{}-dev.labels.pkl'.format(args['path'], config['topic_name'])
+        trn_data_kwargs['topic_rep_dict'] = '{}/{}-{}-train.labels.pkl'.format(args['path'], SEED, config['topic_name'])
+        dev_data_kwargs['topic_rep_dict'] = '{}/{}-{}-dev.labels.pkl'.format(args['path'], SEED, config['topic_name'])
 
     #############
     # LOAD DATA #
@@ -301,8 +303,8 @@ if __name__ == '__main__':
                   'setup_fn': setup_fn}
 
         model_handler = model_utils.TorchModelHandler(use_cuda=use_cuda,
-                                                      checkpoint_path=checkpoint_path,
-                                                      result_path=result_path,
+                                                      checkpoint_path=os.path.join(checkpoint_path, SEED),
+                                                      result_path=os.path.join(result_path, SEED),
                                                       use_score=args['score_key'], save_ckp=(args['save_ckp'] == 1),
                                                       **kwargs)
 

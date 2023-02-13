@@ -10,7 +10,6 @@ import torch.optim as optim
 import pandas as pd
 
 VECTOR_NAME = 'glove.6B.100d'
-SEED = 0
 NUM_GPUS = None
 use_cuda = torch.cuda.is_available()
 
@@ -79,8 +78,11 @@ if __name__ == '__main__':
                         required=False, default='')
     parser.add_argument('--outname', help='Ouput file name', default='', required=True)
     parser.add_argument('--outpath', help='output path', default='', required=True)
+    parser.add_argument('--seed', help='Random seed', default=0, required=True)
     parser.add_argument('-v', '--score_key', help='What optimized for', required=False, default='f_macro')
     args = vars(parser.parse_args())
+
+    SEED = args.seed
 
     torch.manual_seed(SEED)
     torch.cuda.manual_seed_all(SEED)
@@ -103,19 +105,22 @@ if __name__ == '__main__':
     dev_data_kwargs = {}
 
     if 'topic_name' in config:
-        topic_vecs = np.load('{}/{}.{}.npy'.format(args['path'],
-                                                   config['topic_name'],
-                                                   config.get('rep_v', 'centroids')))
-        trn_data_kwargs['topic_rep_dict'] = '{}/{}-train.labels.pkl'.format(args['path'],
-                                                                            config['topic_name'])
+        topic_vecs = np.load('{}/{}-{}.{}.npy'.format(args['path'],
+                                                      SEED,
+                                                      config['topic_name'],
+                                                      config.get('rep_v', 'centroids')))
+        trn_data_kwargs['topic_rep_dict'] = '{}/{}-{}-train.labels.pkl'.format(args['path'],
+                                                                               SEED,
+                                                                               config['topic_name'])
 
         if 'test' in args['dev_data']:
             dev_s = 'test'
         else:
             dev_s = 'dev'
-        dev_data_kwargs['topic_rep_dict'] = '{}/{}-{}.labels.pkl'.format(args['path'],
-                                                                         config['topic_name'],
-                                                                         dev_s)
+        dev_data_kwargs['topic_rep_dict'] = '{}/{}-{}-{}.labels.pkl'.format(args['path'],
+                                                                            SEED,
+                                                                            config['topic_name'],
+                                                                            dev_s)
 
     #############
     # LOAD DATA #
@@ -193,8 +198,8 @@ if __name__ == '__main__':
                   'setup_fn': setup_fn}
 
         model_handler = model_utils.TorchModelHandler(use_cuda=use_cuda,
-                                                      checkpoint_path=config.get('ckp_path', 'data/checkpoints/'),
-                                                      result_path=config.get('res_path', 'data/gen-stance/'),
+                                                      checkpoint_path=args['checkpoint_path'],
+                                                      result_path=args['result_path'],
                                                       use_score=args['score_key'],
                                                       **kwargs)
 
