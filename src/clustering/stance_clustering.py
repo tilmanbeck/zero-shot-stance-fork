@@ -268,7 +268,7 @@ if __name__ == '__main__':
     parser.add_argument('-r', '--num_trials', help='Number of trials for search')
     args = vars(parser.parse_args())
 
-    SEED = args.seed
+    SEED = args['seed']
 
     torch.manual_seed(SEED)
     torch.cuda.manual_seed_all(SEED)

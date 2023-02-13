@@ -73,6 +73,7 @@ if __name__ == '__main__':
     parser.add_argument('-k', '--ckp_name', help='Checkpoint name', required=False)
     parser.add_argument('-p', '--path', help='Path to topic directory', required=True)
     parser.add_argument('-c', '--checkpoint_path', help='Path to checkpoints', required=False)
+    parser.add_argument('--result_path', help='Path to result files', required=False)
     parser.add_argument('-m', '--mode', help='What to do', required=True)
     parser.add_argument('-n', '--name', help='something to add to the saved model name',
                         required=False, default='')
@@ -82,7 +83,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--score_key', help='What optimized for', required=False, default='f_macro')
     args = vars(parser.parse_args())
 
-    SEED = args.seed
+    SEED = args['seed']
 
     torch.manual_seed(SEED)
     torch.cuda.manual_seed_all(SEED)
