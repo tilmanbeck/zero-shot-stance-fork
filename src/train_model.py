@@ -303,8 +303,8 @@ if __name__ == '__main__':
                   'setup_fn': setup_fn}
 
         model_handler = model_utils.TorchModelHandler(use_cuda=use_cuda,
-                                                      checkpoint_path=os.path.join(checkpoint_path, SEED),
-                                                      result_path=os.path.join(result_path, SEED),
+                                                      checkpoint_path=checkpoint_path,
+                                                      result_path=result_path, seed=SEED,
                                                       use_score=args['score_key'], save_ckp=(args['save_ckp'] == 1),
                                                       **kwargs)
 

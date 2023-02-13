@@ -101,7 +101,7 @@ class TorchModelHandler:
     written in pytorch.
     '''
     def __init__(self, num_ckps=10, use_score='f_macro', use_cuda=False, use_last_batch=True,
-                 num_gpus=None, checkpoint_path='data/checkpoints/',
+                 num_gpus=None, checkpoint_path='data/checkpoints/', seed=0,
                  result_path='data/', **params):
         super(TorchModelHandler, self).__init__()
         # data fields
@@ -125,6 +125,7 @@ class TorchModelHandler:
         self.optimizer = params['optimizer']
 
         # stats fields
+        self.seed = seed
         self.checkpoint_path = checkpoint_path
         self.checkpoint_num = 0
         self.num_ckps = num_ckps
@@ -212,13 +213,13 @@ class TorchModelHandler:
             'model_state_dict': self.model.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'loss': self.loss
-        }, '{}ckp-{}-{}.tar'.format(self.checkpoint_path, self.name, check_num))
+        }, '{}/{}-ckp-{}-{}.tar'.format(self.checkpoint_path, self.seed, self.name, check_num))
 
         if not self.embed_model.static_embeds:
             torch.save({
                 'epoch': self.epoch,
                 'model_state_dict': self.embed_model.state_dict(),
-            }, '{}ckp-{}-{}.embeddings.tar'.format(self.checkpoint_path, self.name,
+            }, '{}/{}-ckp-{}-{}.embeddings.tar'.format(self.checkpoint_path, self.seed, self.name,
                                                    check_num))
 
         if num is None:

@@ -90,8 +90,7 @@ if __name__ == '__main__':
 
     if not os.path.exists(args['outpath']):
         os.makedirs(args['outpath'])
-
-    outname = os.path.join(args['outpath'], args['outname'])
+    outname = os.path.join(args['outpath'], "{}-".format(SEED) + args['outname'])
 
     ####################
     # load config file #
@@ -199,6 +198,7 @@ if __name__ == '__main__':
 
         model_handler = model_utils.TorchModelHandler(use_cuda=use_cuda,
                                                       checkpoint_path=args['checkpoint_path'],
+                                                      seed=SEED,
                                                       result_path=args['result_path'],
                                                       use_score=args['score_key'],
                                                       **kwargs)
@@ -333,7 +333,7 @@ if __name__ == '__main__':
                                                       use_score=args['score_key'],
                                                       **kwargs)
 
-    cname = '{}/ckp-[NAME]-{}.tar'.format(args['checkpoint_path'], args['ckp_name'])
+    cname = '{}/{}-ckp-[NAME]-{}.tar'.format(args['checkpoint_path'], SEED, args['ckp_name'])
     model_handler.load(filename=cname)
 
     if args['mode'] == 'eval':
