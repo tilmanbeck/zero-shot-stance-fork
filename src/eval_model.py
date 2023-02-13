@@ -1,5 +1,6 @@
 import numpy as np
 import torch, os, sys, argparse
+
 sys.path.append('./modeling')
 import models as bm
 import data_utils, model_utils, datasets
@@ -12,6 +13,7 @@ VECTOR_NAME = 'glove.6B.100d'
 SEED = 0
 NUM_GPUS = None
 use_cuda = torch.cuda.is_available()
+
 
 def eval(model_handler, dev_data, class_wise=False, is_test=False, correct_preds=False):
     '''
@@ -109,7 +111,7 @@ if __name__ == '__main__':
         else:
             dev_s = 'dev'
         dev_data_kwargs['topic_rep_dict'] = '{}/{}-{}.labels.pkl'.format(args['path'],
-                                                                          config['topic_name'],
+                                                                         config['topic_name'],
                                                                          dev_s)
 
     #############
@@ -121,7 +123,6 @@ if __name__ == '__main__':
         ################
         # load vectors #
         ################
-
 
         vec_name = config['vec_name']
         vec_dim = int(config['vec_dim'])
@@ -157,6 +158,7 @@ if __name__ == '__main__':
     dev_dataloader = data_utils.DataSampler(dev_data, batch_size=int(config['b']), shuffle=False)
 
     lr = float(config.get('lr', '0.001'))
+    num_labels = data.get_num_labels()
 
     if 'tganet' in config['name']:
         batch_args = {'keep_sen': False}
@@ -169,13 +171,14 @@ if __name__ == '__main__':
         loss_fn = nn.CrossEntropyLoss()
 
         model = bm.TGANet(in_dropout_prob=float(config['in_dropout']),
-                                 hidden_size=int(config['hidden_size']),
-                                 text_dim=int(config['text_dim']),
-                                 add_topic=(config.get('add_resid', '0') == '1'),
-                                 att_mode=config.get('att_mode', 'text_only'),
-                                 topic_dim=int(config['topic_dim']),
-                                 learned=(config.get('learned', '0') == '1'),
-                                 use_cuda=use_cuda)
+                          hidden_size=int(config['hidden_size']),
+                          text_dim=int(config['text_dim']),
+                          num_labels=num_labels,
+                          add_topic=(config.get('add_resid', '0') == '1'),
+                          att_mode=config.get('att_mode', 'text_only'),
+                          topic_dim=int(config['topic_dim']),
+                          learned=(config.get('learned', '0') == '1'),
+                          use_cuda=use_cuda)
 
         optimizer = optim.Adam(model.parameters())
 
@@ -207,7 +210,7 @@ if __name__ == '__main__':
             batch_args = {'keep_sen': False}
             input_layer = im.BERTLayer(mode='text-level', use_cuda=use_cuda)
 
-        setup_fn =data_utils.setup_helper_bert_ffnn
+        setup_fn = data_utils.setup_helper_bert_ffnn
 
         loss_fn = nn.CrossEntropyLoss()
         model = bm.FFNN(input_dim=input_layer.dim, in_dropout_prob=float(config['in_dropout']),
@@ -321,8 +324,6 @@ if __name__ == '__main__':
                                                       result_path=config.get('res_path', 'data/gen-stance/'),
                                                       use_score=args['score_key'],
                                                       **kwargs)
-
-
 
     cname = '{}/ckp-[NAME]-{}.tar'.format(args['checkpoint_path'], args['ckp_name'])
     model_handler.load(filename=cname)
