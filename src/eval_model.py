@@ -86,8 +86,10 @@ if __name__ == '__main__':
     torch.cuda.manual_seed_all(SEED)
     torch.backends.cudnn.deterministic = True
 
-    if not os.path.exists(args['out']):
-        os.makedirs(args['out'])
+    if not os.path.exists(args['outpath']):
+        os.makedirs(args['outpath'])
+
+    outname = os.path.join(args['outpath'], args['outname'])
 
     ####################
     # load config file #
@@ -332,6 +334,6 @@ if __name__ == '__main__':
     if args['mode'] == 'eval':
         eval(model_handler, dev_dataloader, class_wise=True, is_test=('test' in args['dev_data']))
     elif args['mode'] == 'predict':
-        save_predictions(model_handler, dev_dataloader, out_name=args['outname'], is_test=('test' in args['dev_data']))
+        save_predictions(model_handler, dev_dataloader, out_name=outname, is_test=('test' in args['dev_data']))
     else:
         print("doing nothing")
