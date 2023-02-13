@@ -70,6 +70,8 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--trn_data', help='Name of the training data file', required=False)
     parser.add_argument('-d', '--dev_data', help='Name of the dev data file', default=None, required=False)
     parser.add_argument('-k', '--ckp_name', help='Checkpoint name', required=False)
+    parser.add_argument('-p', '--path', help='Path to topic directory', required=True)
+    parser.add_argument('-c', '--checkpoint_path', help='Path to checkpoints', required=False)
     parser.add_argument('-m', '--mode', help='What to do', required=True)
     parser.add_argument('-n', '--name', help='something to add to the saved model name',
                         required=False, default='')
@@ -93,17 +95,17 @@ if __name__ == '__main__':
     dev_data_kwargs = {}
 
     if 'topic_name' in config:
-        topic_vecs = np.load('{}/{}.{}.npy'.format(config['topic_path'],
+        topic_vecs = np.load('{}/{}.{}.npy'.format(args['path'],
                                                    config['topic_name'],
                                                    config.get('rep_v', 'centroids')))
-        trn_data_kwargs['topic_rep_dict'] = '{}/{}-train.labels.pkl'.format(config['topic_path'],
+        trn_data_kwargs['topic_rep_dict'] = '{}/{}-train.labels.pkl'.format(args['path'],
                                                                             config['topic_name'])
 
         if 'test' in args['dev_data']:
             dev_s = 'test'
         else:
             dev_s = 'dev'
-        dev_data_kwargs['topic_rep_dict'] = '{}/{}-{}.labels.pkl'.format(config['topic_path'],
+        dev_data_kwargs['topic_rep_dict'] = '{}/{}-{}.labels.pkl'.format(args['path'],
                                                                           config['topic_name'],
                                                                          dev_s)
 
@@ -319,7 +321,7 @@ if __name__ == '__main__':
 
 
 
-    cname = '{}ckp-[NAME]-{}.tar'.format(config.get('ckp_path', 'data/checkpoints/'), args['ckp_name'])
+    cname = '{}/ckp-[NAME]-{}.tar'.format(args['checkpoint_path'], args['ckp_name'])
     model_handler.load(filename=cname)
 
     if args['mode'] == 'eval':
