@@ -83,6 +83,9 @@ if __name__ == '__main__':
     torch.cuda.manual_seed_all(SEED)
     torch.backends.cudnn.deterministic = True
 
+    if os.path.exists(args['out']):
+        os.makedirs(args['out'])
+
     ####################
     # load config file #
     ####################
